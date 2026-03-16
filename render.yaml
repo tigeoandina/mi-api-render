@@ -2,7 +2,7 @@ services:
   # ==========================================
   # SERVICIO 1: BASE DE DATOS PostgreSQL
   # ==========================================
-  - type: postgres
+  - type: ps
     name: mi-api-db
     databaseName: apidb
     user: admin
