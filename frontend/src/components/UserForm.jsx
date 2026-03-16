@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 
-const API_URL = 'https://mi-api-render-ghic.onrender.com';
+const API_URL = import.meta.env.VITE_API_URL || 'https://mi-api-render-ghic.onrender.com';
 
 function UserForm({ onUserCreated }) {
   const [formData, setFormData] = useState({

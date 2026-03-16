@@ -1,0 +1,49 @@
+services:
+  # ==========================================
+  # SERVICIO 1: BASE DE DATOS PostgreSQL
+  # ==========================================
+  - type: postgres
+    name: mi-api-db
+    databaseName: apidb
+    user: admin
+    plan: free
+    region: oregon
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow all IP addresses
+    
+  # ==========================================
+  # SERVICIO 2: BACKEND API (Node.js)
+  # ==========================================
+  - type: web
+    name: mi-api-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - fromDatabase:
+          name: mi-api-db
+          property: connectionString
+          key: DATABASE_URL
+    
+  # ==========================================
+  # SERVICIO 3: FRONTEND (React)
+  # ==========================================
+  - type: web
+    name: mi-api-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
