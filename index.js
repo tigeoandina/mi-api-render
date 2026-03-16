@@ -29,6 +29,17 @@ app.get('/api/suma', (req, res) => {
   });
 });
 
+// Endpoint de saludo personalizado
+app.get('/api/saludo', (req, res) => {
+  const { nombre } = req.query;
+  
+  res.json({
+    mensaje: `¡Hola ${nombre || 'Mundo'}!`,
+    bienvenido: true,
+    timestamp: new Date().toISOString()
+  });
+});
+
 app.listen(port, '0.0.0.0', () => {
   console.log(`🚀 Servidor corriendo en puerto ${port}`);
 });
