@@ -1,4 +1,8 @@
 const express = require('express');
+
+const cors = require('cors');  // ← AGREGAR ESTA LÍNEA
+app.use(cors());               // ← AGREGAR ESTA LÍNEA
+
 const app = express();
 const port = process.env.PORT || 10000;
 
