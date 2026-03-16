@@ -1,20 +1,5 @@
 services:
-  # ==========================================
-  # SERVICIO 1: BASE DE DATOS PostgreSQL
-  # ==========================================
-  - type: psql
-    name: mi-api-db
-    databaseName: apidb
-    user: admin
-    plan: free
-    region: oregon
-    ipAllowList:
-      - source: 0.0.0.0/0
-        description: Allow all IP addresses
-    
-  # ==========================================
-  # SERVICIO 2: BACKEND API (Node.js)
-  # ==========================================
+  # SERVICIO 1: BACKEND API (con base de datos automática)
   - type: web
     name: mi-api-backend
     env: node
@@ -32,10 +17,8 @@ services:
           name: mi-api-db
           property: connectionString
           key: DATABASE_URL
-    
-  # ==========================================
-  # SERVICIO 3: FRONTEND (React)
-  # ==========================================
+  
+  # SERVICIO 2: FRONTEND
   - type: web
     name: mi-api-frontend
     env: static
@@ -47,3 +30,13 @@ services:
       - path: /*
         name: X-Frame-Options
         value: SAMEORIGIN
+
+databases:
+  - name: mi-api-db
+    databaseName: apidb
+    user: admin
+    plan: free
+    region: oregon
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: Allow all IP addresses
