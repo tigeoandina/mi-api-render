@@ -1,5 +1,5 @@
 services:
-  # SERVICIO 1: BACKEND API (con base de datos automática)
+  # SERVICIO 1: BACKEND API
   - type: web
     name: mi-api-backend
     env: node
@@ -13,16 +13,15 @@ services:
         value: production
       - key: PORT
         value: 10000
-      - fromDatabase:
+      - key: DATABASE_URL
+        fromDatabase:
           name: mi-api-db
           property: connectionString
-          key: DATABASE_URL
   
-  # SERVICIO 2: FRONTEND
+  # SERVICIO 2: FRONTEND (sin region)
   - type: web
     name: mi-api-frontend
     env: static
-    region: oregon
     plan: free
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
