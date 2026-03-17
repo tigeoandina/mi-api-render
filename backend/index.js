@@ -1,15 +1,6 @@
 const express = require('express');
 const cors = require('cors');  // ← AGREGAR ESTA LÍNEA
 
-app.use(cors({
-  origin: [
-    'https://mi-api-frontend.onrender.com',      // Frontend antiguo
-    'https://mi-api-frontend-0ggv.onrender.com', // Frontend nuevo
-    'http://localhost:5173'                      // Local
-  ],
-  credentials: true
-}));
-
 const app = express();
 const port = process.env.PORT || 10000;
 
@@ -18,6 +9,14 @@ const { sequelize, testConnection } = require('./database');
 const User = require('./models/User');
 
 app.use(express.json());
+app.use(cors({
+  origin: [
+    'https://mi-api-frontend.onrender.com',      // Frontend antiguo
+    'https://mi-api-frontend-0ggv.onrender.com', // Frontend nuevo
+    'http://localhost:5173'                      // Local
+  ],
+  credentials: true
+}));
 
 app.use(cors({
   origin: ['https://mi-api-frontend.onrender.com', 'http://localhost:5173'],
