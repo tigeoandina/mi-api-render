@@ -1,8 +1,8 @@
 services:
-  # SERVICIO 1: BACKEND API
+  # SERVICIO 1: BACKEND API (Node.js)
   - type: web
     name: mi-api-backend
-    env: node
+    runtime: node
     region: oregon
     plan: free
     buildCommand: cd backend && npm install
@@ -18,23 +18,23 @@ services:
           name: mi-api-db
           property: connectionString
   
-  # SERVICIO 2: FRONTEND (sin region)
+  # SERVICIO 2: FRONTEND (Static Site)
   - type: web
     name: mi-api-frontend
-    env: static
-    plan: free
+    runtime: static
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     headers:
       - path: /*
         name: X-Frame-Options
-        value: SAMEORIGIN
+        value: sameorigin
 
+# BASE DE DATOS (sección separada)
 databases:
   - name: mi-api-db
+    plan: free
     databaseName: apidb
     user: admin
-    plan: free
     region: oregon
     ipAllowList:
       - source: 0.0.0.0/0
