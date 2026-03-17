@@ -16,7 +16,7 @@ function App() {
       </header>
       <main style={styles.main}>
         <UserForm onUserCreated={handleUserCreated} />
-        <UserList />
+        <UserList onUserUpdated={handleUserCreated} />
       </main>
       <footer style={styles.footer}>
         <p>Desarrollado por David Mamani © 2026</p>
@@ -40,7 +40,7 @@ const styles = {
     textAlign: 'center'
   },
   main: {
-    maxWidth: '800px',
+    maxWidth: '1000px',
     margin: '0 auto'
   },
   footer: {
