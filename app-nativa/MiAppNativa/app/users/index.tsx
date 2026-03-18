@@ -72,17 +72,25 @@ export default function UsersListScreen() {
     );
   };
 
-  const renderUser = ({ item }: { item: User }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/users/${item.id}`)}
-    >
-      <View style={styles.cardContent}>
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{item.nombre}</Text>
-          <Text style={styles.userEmail}>{item.email}</Text>
-          <Text style={styles.userAge}>Edad: {item.edad} años</Text>
-        </View>
+// Busca esta parte en app/users/index.tsx
+const renderUser = ({ item }: { item: User }) => (
+  <TouchableOpacity
+    style={styles.card}
+    onPress={() => router.push(`/users/${item.id}`)}
+  >
+    <View style={styles.cardContent}>
+      <View style={styles.userInfo}>
+        <Text style={styles.userName}>{item.nombre}</Text>
+        <Text style={styles.userEmail}>{item.email}</Text>
+        <Text style={styles.userAge}>Edad: {item.edad} años</Text>
+      </View>
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => router.push(`/users/${item.id}`)}
+        >
+          <Text style={styles.editButtonText}>✏️</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.deleteButton}
           onPress={() => handleDelete(item.id)}
@@ -90,8 +98,9 @@ export default function UsersListScreen() {
           <Text style={styles.deleteButtonText}>🗑️</Text>
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
-  );
+    </View>
+  </TouchableOpacity>
+);
 
   if (loading) {
     return (
@@ -221,4 +230,29 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+
+  // Agrega estos estilos al final del StyleSheet
+ 
+  actionsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editButton: {
+    backgroundColor: '#ffc107',
+    padding: 8,
+    borderRadius: 8,
+    marginRight: 4,
+  },
+  editButtonText: {
+    fontSize: 18,
+  },
+  deleteButton: {
+    backgroundColor: '#dc3545',
+    padding: 8,
+    borderRadius: 8,
+  },
+  deleteButtonText: {
+    fontSize: 18,
+  },
+
 });
