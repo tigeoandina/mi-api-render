@@ -1,28 +1,29 @@
+require('dotenv').config();
 const express = require('express');
-const cors = require('cors');  // ← AGREGAR ESTA LÍNEA
+const cors = require('cors');
+const sequelize = require('./config/database');
+const User = require('./models/User')(sequelize);
 
 const app = express();
-const port = process.env.PORT || 10000;
+const PORT = process.env.PORT || 10000;
 
-// Importar base de datos y modelo
-const { sequelize, testConnection } = require('./database');
-const User = require('./models/User');
-
-app.use(express.json());
+// ==========================================
+// MIDDLEWARE
+// ==========================================
 app.use(cors({
   origin: [
-    'https://mi-api-frontend.onrender.com',      // Frontend antiguo
-    'https://mi-api-frontend-0ggv.onrender.com', // Frontend nuevo
-    'http://localhost:5173'                      // Local
+    'https://mi-api-frontend.onrender.com',
+    'https://mi-api-frontend-0ggv.onrender.com',
+    'http://localhost:5173',
+    'http://localhost:8081'  // Expo
   ],
   credentials: true
 }));
+app.use(express.json());
 
-app.use(cors({
-  origin: ['https://mi-api-frontend.onrender.com', 'http://localhost:5173'],
-  credentials: true
-}));
-
+// ==========================================
+// RUTAS BÁSICAS
+// ==========================================
 app.get('/', (req, res) => {
   res.json({
     mensaje: '¡Hola desde Render.com!',
@@ -39,7 +40,6 @@ app.get('/health', (req, res) => {
 app.get('/api/suma', (req, res) => {
   const { num1, num2 } = req.query;
   const resultado = Number(num1) + Number(num2);
-  
   res.json({
     operacion: 'suma',
     num1: Number(num1),
@@ -48,16 +48,20 @@ app.get('/api/suma', (req, res) => {
   });
 });
 
-// Endpoint de saludo personalizado
 app.get('/api/saludo', (req, res) => {
   const { nombre } = req.query;
-  
   res.json({
     mensaje: `¡Hola ${nombre || 'Mundo'}!`,
     bienvenido: true,
     timestamp: new Date().toISOString()
   });
 });
+
+// ==========================================
+// RUTAS DE AUTENTICACIÓN
+// ==========================================
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
 
 // ==========================================
 // CRUD DE USUARIOS
@@ -103,11 +107,9 @@ app.put('/api/users/:id', async (req, res) => {
   try {
     const { nombre, email, edad } = req.body;
     const user = await User.findByPk(req.params.id);
-    
     if (!user) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
     }
-    
     await user.update({ nombre, email, edad });
     res.json({ success: true, data: user });
   } catch (error) {
@@ -119,11 +121,9 @@ app.put('/api/users/:id', async (req, res) => {
 app.delete('/api/users/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
-    
     if (!user) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
     }
-    
     await user.destroy();
     res.json({ success: true, message: 'Usuario eliminado' });
   } catch (error) {
@@ -131,19 +131,24 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
-// Iniciar servidor con conexión a BD
+// ==========================================
+// INICIAR SERVIDOR
+// ==========================================
 const startServer = async () => {
   try {
-    // Probar conexión
-    await testConnection();
+    // Probar conexión a PostgreSQL
+    await sequelize.authenticate();
+    console.log('✅ Conectado a PostgreSQL correctamente');
     
-    // Sincronizar modelos (crea tablas si no existen)
+    // Sincronizar modelos (crea/actualiza tablas)
     await sequelize.sync({ alter: true });
     console.log('📊 Base de datos sincronizada');
     
     // Iniciar servidor
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`🚀 Servidor corriendo en puerto ${port}`);
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+      console.log(`📍 URL: http://localhost:${PORT}`);
+      console.log(`🔗 Health: http://localhost:${PORT}/health`);
     });
   } catch (error) {
     console.error('❌ Error al iniciar:', error);

@@ -1,15 +1,15 @@
-// database.js
+// backend/config/database.js
+
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
 
-// Conexión a PostgreSQL usando variable de entorno
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
-  logging: false, // Desactiva logs de SQL en producción
+  logging: false,
   dialectOptions: {
     ssl: {
       require: true,
-      rejectUnauthorized: false // Requerido para Render
+      rejectUnauthorized: false
     }
   }
 });
@@ -18,10 +18,12 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ Conexión a PostgreSQL exitosa');
+    console.log('✅ Conectado a PostgreSQL correctamente');
   } catch (error) {
-    console.error('❌ Error de conexión:', error);
+    console.error('❌ Error conectando a PostgreSQL:', error.message);
   }
 };
 
-module.exports = { sequelize, testConnection };
+testConnection();
+
+module.exports = sequelize;
