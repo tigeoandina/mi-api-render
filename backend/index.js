@@ -5,7 +5,7 @@ const sequelize = require('./config/database');
 const User = require('./models/User')(sequelize);
 
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 
 // ==========================================
 // MIDDLEWARE
@@ -66,8 +66,6 @@ app.use('/api/auth', authRoutes);
 // ==========================================
 // CRUD DE USUARIOS
 // ==========================================
-
-// GET /api/users - Listar todos los usuarios
 app.get('/api/users', async (req, res) => {
   try {
     const users = await User.findAll();
@@ -77,7 +75,6 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-// GET /api/users/:id - Obtener un usuario por ID
 app.get('/api/users/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
@@ -91,7 +88,6 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
-// POST /api/users - Crear un nuevo usuario
 app.post('/api/users', async (req, res) => {
   try {
     const { nombre, email, edad } = req.body;
@@ -102,7 +98,6 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-// PUT /api/users/:id - Actualizar un usuario
 app.put('/api/users/:id', async (req, res) => {
   try {
     const { nombre, email, edad } = req.body;
@@ -117,7 +112,6 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/users/:id - Eliminar un usuario
 app.delete('/api/users/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
@@ -136,15 +130,12 @@ app.delete('/api/users/:id', async (req, res) => {
 // ==========================================
 const startServer = async () => {
   try {
-    // Probar conexión a PostgreSQL
     await sequelize.authenticate();
     console.log('✅ Conectado a PostgreSQL correctamente');
     
-    // Sincronizar modelos (crea/actualiza tablas)
     await sequelize.sync({ alter: true });
     console.log('📊 Base de datos sincronizada');
     
-    // Iniciar servidor
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📍 URL: http://localhost:${PORT}`);
