@@ -1,5 +1,4 @@
 // app/users/index.tsx
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -12,13 +11,17 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { userService } from '../../src/services/api';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_URL = 'http://localhost:3000';
 
 interface User {
   id: number;
   nombre: string;
   email: string;
   edad: number;
+  rol: string;
 }
 
 export default function UsersListScreen() {
@@ -29,10 +32,33 @@ export default function UsersListScreen() {
 
   const fetchUsers = async () => {
     try {
-      const response = await userService.getAll();
-      setUsers(response.data.data || response.data);
+      console.log('🔍 Iniciando fetchUsers...');
+      const token = await AsyncStorage.getItem('token');
+      
+      if (!token) {
+        console.log('❌ No hay token');
+        Alert.alert('Error', 'No hay sesión iniciada');
+        router.replace('/login');
+        return;
+      }
+
+      console.log('✅ Token encontrado');
+
+      const response = await axios.get(`${API_URL}/api/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('✅ Response:', response.data);
+      
+      const usersData = response.data.data || response.data;
+      console.log('📊 Usuarios recibidos:', usersData.length);
+      
+      setUsers(usersData);
+      
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error en fetchUsers:', error);
       Alert.alert('Error', 'No se pudieron cargar los usuarios');
     } finally {
       setLoading(false);
@@ -41,6 +67,7 @@ export default function UsersListScreen() {
   };
 
   useEffect(() => {
+    console.log('📌 useEffect ejecutándose');
     fetchUsers();
   }, []);
 
@@ -60,7 +87,12 @@ export default function UsersListScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await userService.delete(id);
+              const token = await AsyncStorage.getItem('token');
+              await axios.delete(`${API_URL}/api/users/${id}`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
               Alert.alert('Éxito', 'Usuario eliminado correctamente');
               fetchUsers();
             } catch (error) {
@@ -72,43 +104,56 @@ export default function UsersListScreen() {
     );
   };
 
-// Busca esta parte en app/users/index.tsx
-const renderUser = ({ item }: { item: User }) => (
-  <TouchableOpacity
-    style={styles.card}
-    onPress={() => router.push(`/users/${item.id}`)}
-  >
-    <View style={styles.cardContent}>
-      <View style={styles.userInfo}>
-        <Text style={styles.userName}>{item.nombre}</Text>
-        <Text style={styles.userEmail}>{item.email}</Text>
-        <Text style={styles.userAge}>Edad: {item.edad} años</Text>
-      </View>
-      <View style={styles.actionsContainer}>
-        <TouchableOpacity
-          style={styles.editButton}
-          onPress={() => router.push(`/users/${item.id}`)}
-        >
-          <Text style={styles.editButtonText}>✏️</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => handleDelete(item.id)}
-        >
-          <Text style={styles.deleteButtonText}>🗑️</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </TouchableOpacity>
-);
+  const renderUser = ({ item }: { item: User }) => {
+    console.log('🎨 Renderizando:', item.nombre);
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push(`/users/${item.id}`)}
+      >
+        <View style={styles.cardContent}>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{item.nombre}</Text>
+            <Text style={styles.userEmail}>{item.email}</Text>
+            <Text style={styles.userAge}>Edad: {item.edad} años</Text>
+          </View>
+          <View style={styles.actionsContainer}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                router.push(`/users/${item.id}`);
+              }}
+            >
+              <Text style={styles.editButtonText}>✏️</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDelete(item.id);
+              }}
+            >
+              <Text style={styles.deleteButtonText}>🗑️</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
+  console.log('📝 Renderizando componente. Users:', users.length);
   if (loading) {
+    console.log('⏳ Mostrando loading...');
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0070f3" />
         <Text style={styles.loadingText}>Cargando usuarios...</Text>
       </View>
     );
+  }
+
+  if (users.length === 0) {
+    console.log('⚠️ No hay usuarios para mostrar');
   }
 
   return (
@@ -118,8 +163,8 @@ const renderUser = ({ item }: { item: User }) => (
         renderItem={renderUser}
         keyExtractor={(item) => item.id.toString()}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
+          <RefreshControl
+            refreshing={refreshing}
             onRefresh={onRefresh}
             colors={['#0070f3']}
           />
@@ -131,7 +176,6 @@ const renderUser = ({ item }: { item: User }) => (
           </View>
         }
       />
-      
       <TouchableOpacity
         style={styles.fab}
         onPress={() => router.push('/create-user')}
@@ -149,6 +193,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
+    paddingBottom: 100,
   },
   centered: {
     flex: 1,
@@ -203,11 +248,26 @@ const styles = StyleSheet.create({
     color: '#0070f3',
     fontWeight: '500',
   },
-  deleteButton: {
+  actionsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editButton: {
+    backgroundColor: '#ffc107',
     padding: 8,
+    borderRadius: 8,
+    marginRight: 4,
+  },
+  editButtonText: {
+    fontSize: 18,
+  },
+  deleteButton: {
+    backgroundColor: '#dc3545',
+    padding: 8,
+    borderRadius: 8,
   },
   deleteButtonText: {
-    fontSize: 20,
+    fontSize: 18,
   },
   fab: {
     position: 'absolute',
@@ -230,29 +290,4 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-
-  // Agrega estos estilos al final del StyleSheet
- 
-  actionsContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  editButton: {
-    backgroundColor: '#ffc107',
-    padding: 8,
-    borderRadius: 8,
-    marginRight: 4,
-  },
-  editButtonText: {
-    fontSize: 18,
-  },
-  deleteButton: {
-    backgroundColor: '#dc3545',
-    padding: 8,
-    borderRadius: 8,
-  },
-  deleteButtonText: {
-    fontSize: 18,
-  },
-
 });

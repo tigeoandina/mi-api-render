@@ -1,6 +1,6 @@
 // src/config/api.ts
 
-export const API_URL = 'https://mi-api-backend-0ggv.onrender.com';
+export const API_URL = 'http://localhost:3000';
 
 export const ENDPOINTS = {
   USERS: `${API_URL}/api/users`,

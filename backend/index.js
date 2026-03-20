@@ -15,7 +15,7 @@ app.use(cors({
     'https://mi-api-frontend.onrender.com',
     'https://mi-api-frontend-0ggv.onrender.com',
     'http://localhost:5173',
-    'http://localhost:8081'  // Expo
+    'http://localhost:8081'
   ],
   credentials: true
 }));
@@ -37,26 +37,6 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.get('/api/suma', (req, res) => {
-  const { num1, num2 } = req.query;
-  const resultado = Number(num1) + Number(num2);
-  res.json({
-    operacion: 'suma',
-    num1: Number(num1),
-    num2: Number(num2),
-    resultado: resultado
-  });
-});
-
-app.get('/api/saludo', (req, res) => {
-  const { nombre } = req.query;
-  res.json({
-    mensaje: `¡Hola ${nombre || 'Mundo'}!`,
-    bienvenido: true,
-    timestamp: new Date().toISOString()
-  });
-});
-
 // ==========================================
 // RUTAS DE AUTENTICACIÓN
 // ==========================================
@@ -64,9 +44,11 @@ const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
 // ==========================================
-// CRUD DE USUARIOS
+// CRUD DE USUARIOS (PROTEGIDO)
 // ==========================================
-app.get('/api/users', async (req, res) => {
+const { verifyToken } = require('./middleware/auth');
+
+app.get('/api/users', verifyToken, async (req, res) => {
   try {
     const users = await User.findAll();
     res.json({ success: true, data: users });
@@ -75,7 +57,7 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
-app.get('/api/users/:id', async (req, res) => {
+app.get('/api/users/:id', verifyToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (user) {
@@ -88,7 +70,7 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
-app.post('/api/users', async (req, res) => {
+app.post('/api/users', verifyToken, async (req, res) => {
   try {
     const { nombre, email, edad } = req.body;
     const user = await User.create({ nombre, email, edad });
@@ -98,7 +80,7 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-app.put('/api/users/:id', async (req, res) => {
+app.put('/api/users/:id', verifyToken, async (req, res) => {
   try {
     const { nombre, email, edad } = req.body;
     const user = await User.findByPk(req.params.id);
@@ -112,7 +94,7 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/users/:id', async (req, res) => {
+app.delete('/api/users/:id', verifyToken, async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) {
@@ -133,13 +115,13 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ Conectado a PostgreSQL correctamente');
     
+    // ✅ CORREGIDO: alter: true (NO borra datos)
     await sequelize.sync({ alter: true });
     console.log('📊 Base de datos sincronizada');
     
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📍 URL: http://localhost:${PORT}`);
-      console.log(`🔗 Health: http://localhost:${PORT}/health`);
     });
   } catch (error) {
     console.error('❌ Error al iniciar:', error);

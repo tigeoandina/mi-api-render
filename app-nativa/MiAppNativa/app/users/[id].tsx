@@ -1,5 +1,4 @@
 // app/users/[id].tsx
-
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -12,20 +11,22 @@ import {
   ScrollView,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { userService } from '../../src/services/api';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_URL = 'http://localhost:3000';
 
 interface User {
   id: number;
   nombre: string;
   email: string;
   edad: number;
+  rol: string;
 }
 
 export default function UserDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const userId = params.id as string;
-  
   const [user, setUser] = useState<User | null>(null);
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
@@ -40,7 +41,10 @@ export default function UserDetailScreen() {
 
   const fetchUser = async () => {
     try {
-      const response = await userService.getById(parseInt(userId));
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.get(`${API_URL}/api/users/${params.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const userData = response.data.data || response.data;
       setUser(userData);
       setNombre(userData.nombre);
@@ -59,30 +63,21 @@ export default function UserDetailScreen() {
       return;
     }
 
-    if (!email.includes('@')) {
-      Alert.alert('Error', 'Ingresa un email válido');
-      return;
-    }
-
-    const edadNum = parseInt(edad);
-    if (isNaN(edadNum) || edadNum < 1 || edadNum > 150) {
-      Alert.alert('Error', 'Ingresa una edad válida (1-150)');
-      return;
-    }
-
     setSaving(true);
     try {
-      await userService.update(parseInt(userId), {
+      const token = await AsyncStorage.getItem('token');
+      await axios.put(`${API_URL}/api/users/${params.id}`, {
         nombre,
         email,
-        edad: edadNum,
+        edad: parseInt(edad),
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       Alert.alert('Éxito', 'Usuario actualizado correctamente');
       setMode('view');
       fetchUser();
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'No se pudo actualizar el usuario';
-      Alert.alert('Error', errorMessage);
+      Alert.alert('Error', error.response?.data?.error || 'No se pudo actualizar');
     } finally {
       setSaving(false);
     }
@@ -99,9 +94,12 @@ export default function UserDetailScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await userService.delete(parseInt(userId));
+              const token = await AsyncStorage.getItem('token');
+              await axios.delete(`${API_URL}/api/users/${params.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
               Alert.alert('Éxito', 'Usuario eliminado correctamente');
-              router.push('/users');
+              router.back();
             } catch (error) {
               Alert.alert('Error', 'No se pudo eliminar el usuario');
             }
@@ -114,7 +112,6 @@ export default function UserDetailScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0070f3" />
         <Text style={styles.loadingText}>Cargando usuario...</Text>
       </View>
     );
